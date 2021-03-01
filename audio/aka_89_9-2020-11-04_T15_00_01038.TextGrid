@@ -1,0 +1,22 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 9.990725623582767 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "Marry" 
+        xmin = 0 
+        xmax = 9.990725623582767 
+        intervals: size = 2 
+        intervals [1]:
+            xmin = 0 
+            xmax = 3.6032842762235826 
+            text = "Nineteen ate buli omu asobola okufa ekirwadde ekyo." 
+        intervals [2]:
+            xmin = 3.6032842762235826 
+            xmax = 9.990725623582767 
+            text = "Minisita omubeezi avunaanyizibwa ku nsonga za Kampala Benny Namugwanya ku kirwadde ki Covid nineteen ekiyinza okutaama." 

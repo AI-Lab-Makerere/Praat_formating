@@ -1,0 +1,22 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 9.990725623582767 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "Marry" 
+        xmin = 0 
+        xmax = 9.990725623582767 
+        intervals: size = 2 
+        intervals [1]:
+            xmin = 0 
+            xmax = 9.6557996482575 
+            text = "Mu kibuga Kampala wamu n'emirirwano abantu abakwatiddwa ekirwadde ekyo so far  bali enkumi nnya mu lusanvu mu ataano mu babiri  tte nga bafudde bali nkaaga mu bana " 
+        intervals [2]:
+            xmin = 9.6557996482575 
+            xmax = 9.990725623582767 
+            text = "JUNK" 
