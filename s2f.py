@@ -8,7 +8,6 @@ from pydub.utils import which
 AudioSegment.converter = which("ffmpeg")
 
 # FIXME the segments overwrite each other - add a file specific prefix
-# FIXME the segments crowd the other files and confuse the scripts - create a directory for the segment files and ignore it
 # FIXME create a new csv file then append all segments to it..
 
 parser = argparse.ArgumentParser(
@@ -19,49 +18,13 @@ parser.add_argument('--input-dir')
 #parser.add_argument('--output-csv-path', default='/home/sha3bola/repos/rcrops/segment_to_file_util/')
 parser.add_argument('--output-prefix', default='seg')
 
+from utils import ensure_files_and_folders_exist
+
 args = parser.parse_args()
+
+ensure_files_and_folders_exist(args.input_dir)
+
 files_in_dir = os.listdir(args.input_dir)
-
-
-if not os.path.exists(args.input_dir + "/clips/"):
-    os.mkdir(args.input_dir + "/clips")
-
-
-if not os.path.exists(args.input_dir + "/JUNK_clips/"):
-    os.mkdir(args.input_dir + "/JUNK_clips")
-
-if not os.path.exists(args.input_dir + "/MUSIC_clips/"):
-    os.mkdir(args.input_dir + "/MUSIC_clips")
-
-if not os.path.exists(args.input_dir + "/PHONE_clips/"):
-    os.mkdir(args.input_dir + "/PHONE_clips")
-
-if not os.path.exists(args.input_dir + "/INCOMPLETE_clips/"):
-    os.mkdir(args.input_dir + "/INCOMPLETE_clips")
-
-if not os.path.exists(args.input_dir + "/OVERLAPPING_clips/"):
-    os.mkdir(args.input_dir + "/OVERLAPPING_clips")
-
-
-if os.path.exists(args.input_dir + "/" + "index" + ".csv"):
-    os.remove(args.input_dir + "/" + "index" + ".csv")
-
-if os.path.exists(args.input_dir + "/" + "junk" + ".csv"):
-    os.remove(args.input_dir + "/" + "junk" + ".csv")
-
-if os.path.exists(args.input_dir + "/" + "music" + ".csv"):
-    os.remove(args.input_dir + "/" + "music" + ".csv")
-
-if os.path.exists(args.input_dir + "/" + "phone" + ".csv"):
-    os.remove(args.input_dir + "/" + "phone" + ".csv")
-
-if os.path.exists(args.input_dir + "/" + "incomplete" + ".csv"):
-    os.remove(args.input_dir + "/" + "incomplete" + ".csv")
-
-if os.path.exists(args.input_dir + "/" + "overlapping" + ".csv"):
-    os.remove(args.input_dir + "/" + "overlapping" + ".csv")
-
-
 for file_in_dir in files_in_dir:
 
     if file_in_dir in ["clips", "JUNK_clips", "MUSIC_clips", "PHONE_clips", "INCOMPLETE_clips", "OVERLAPPING_clips"]:
@@ -73,12 +36,23 @@ for file_in_dir in files_in_dir:
 
     audio_file_path = os.path.join(args.input_dir, file_in_dir)
     annotation_file_path = os.path.join(args.input_dir, "{}.TextGrid".format(os.path.splitext(file_in_dir)[0]))
+
     
-    if not os.path.exists(annotation_file_path):
+    assert os.path.splitext(audio_file_path)[0] == os.path.splitext(annotation_file_path)[0]
+    assert os.path.exists(audio_file_path)
+    
+
+    try:
+        assert os.path.exists(annotation_file_path)
+    except:
+       
         timestamp = os.path.splitext(file_in_dir.split('_T')[1])[0]
         annotation_file_name = "{}_T{}.TextGrid".format(file_in_dir.split('_T')[0], timestamp.replace('.','_'))
         annotation_file_path = os.path.join(args.input_dir, annotation_file_name)
-    
+
+        assert os.path.exists(annotation_file_path)
+
+
     try:
         if audio_file_path.split(".")[-1] == "mp3":
             main_audio_file = AudioSegment.from_mp3(audio_file_path)
@@ -109,6 +83,7 @@ for file_in_dir in files_in_dir:
 
     number_of_items = len(main_annotation_file.tier_list[0]['items'])
     segment_files_list = []  # (file_path, text)
+    file_prefix = os.path.splitext(audio_file_path)[0].split("/")[-1]
     for i in range(number_of_items):
 
         segment_to_seperate = main_annotation_file.tier_list[0]['items'][i]
@@ -121,45 +96,35 @@ for file_in_dir in files_in_dir:
         # print(segment_xmax)
         segment_audio = main_audio_file[segment_xmin:segment_xmax]
         segment_text = segment_to_seperate["text"]
+        segment_audio_path = file_prefix + "_" + args.output_prefix + str(i) + ".mp3"
 
-        if segment_text.lower() == "junk." or segment_text.lower() == "junk":
-            segment_audio_path = audio_file_path.split(".")[0].split(
-                "/")[-1] + args.output_prefix + str(i) + ".mp3"
+        if segment_text.lower() in ["junk.", "junk"]:
+
             segment_audio = segment_audio.set_channels(1)
             segment_audio.export(
-                args.input_dir + "/" + "JUNK_clips" + "/" + segment_audio_path, format="wav")
+                args.input_dir + "/" + "JUNK_clips" + "/" +  segment_audio_path, format="wav")
 
-        elif segment_text.lower() == "music." or segment_text.lower() == "music":
-            segment_audio_path = audio_file_path.split(".")[0].split(
-                "/")[-1] + args.output_prefix + str(i) + ".mp3"
+        elif segment_text.lower() in ["music.", "music"]:
             segment_audio = segment_audio.set_channels(1)
             segment_audio.export(
                 args.input_dir + "/" + "MUSIC_clips" + "/" + segment_audio_path, format="mp3")
 
-        elif segment_text.lower() == "phone call." or segment_text.lower() == "phone call" or segment_text.lower() == "phone speech." or segment_text.lower() == "phone speech":
-            segment_audio_path = audio_file_path.split(".")[0].split(
-                "/")[-1] + args.output_prefix + str(i) + ".mp3"
+        elif segment_text.lower() in ["phone call.", "phone call", "phone speech.", "phone speech"]:
             segment_audio = segment_audio.set_channels(1)
             segment_audio.export(
                 args.input_dir + "/" + "PHONE_clips" + "/" + segment_audio_path, format="mp3")
 
         elif total_segment_duration >= 30000 or segment_text.lower().rstrip().lstrip() == "":
-            segment_audio_path = audio_file_path.split(".")[0].split(
-                "/")[-1] + args.output_prefix + str(i) + ".mp3"
             segment_audio = segment_audio.set_channels(1)
             segment_audio.export(
                 args.input_dir + "/" + "INCOMPLETE_clips" + "/" + segment_audio_path, format="mp3")
 
-        elif segment_text.lower() == "overlap." or segment_text.lower() == "overlapping." or segment_text.lower() == "overlap" or segment_text.lower() == "overlapping":
-            segment_audio_path = audio_file_path.split(".")[0].split(
-                "/")[-1] + args.output_prefix + str(i) + ".mp3"
+        elif segment_text.lower() in ["overlap.", "overlapping.", "overlap", "overlapping"]:
             segment_audio = segment_audio.set_channels(1)
             segment_audio.export(
                 args.input_dir + "/" + "OVERLAPPING_clips" + "/" + segment_audio_path, format="mp3")
 
         else:
-            segment_audio_path = audio_file_path.split(".")[0].split(
-                "/")[-1] + args.output_prefix + str(i) + ".wav"
             segment_audio = segment_audio.set_channels(1)
             segment_audio.export(
                 args.input_dir + "/" + "clips" + "/" + segment_audio_path, format="wav")
